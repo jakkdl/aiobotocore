@@ -1,7 +1,6 @@
 import hashlib
 
 import botocore
-import pytest
 from botocore import retryhandler, stub
 from botocore.args import ClientArgsCreator
 from botocore.awsrequest import AWSResponse
@@ -43,7 +42,6 @@ from botocore.endpoint import (
 )
 from botocore.eventstream import EventStream
 from botocore.handlers import (
-    _looks_like_special_case_error,
     check_for_200_error,
     inject_presigned_url_ec2,
     inject_presigned_url_rds,
@@ -79,9 +77,13 @@ from botocore.session import Session, get_session
 from botocore.signers import (
     RequestSigner,
     S3PostPresigner,
+    _dsql_generate_db_auth_token,
+    add_dsql_generate_db_auth_token_methods,
     add_generate_db_auth_token,
     add_generate_presigned_post,
     add_generate_presigned_url,
+    dsql_generate_db_connect_admin_auth_token,
+    dsql_generate_db_connect_auth_token,
     generate_db_auth_token,
     generate_presigned_post,
     generate_presigned_url,
@@ -202,7 +204,7 @@ _API_DIGESTS = {
     # config.py
     Config.merge: {'c3dd8c3ffe0da86953ceba4a35267dfb79c6a2c8'},
     Config: {
-        '823f8d031fc7218a600a56268a369aaa878f46c8',
+        'b74583575a542516edeeeec2e5d30ee61ce449b0',
     },
     # credentials.py
     create_mfa_serial_refresher: {'9b5e98782fcacdcea5899a6d0d29d1b9de348bb0'},
@@ -488,14 +490,28 @@ _API_DIGESTS = {
         'd03631d6810e2453b8874bc76619927b694a4207',
     },
     S3PostPresigner.generate_presigned_post: {
-        '269efc9af054a2fd2728d5b0a27db82c48053d7f'
+        '269efc9af054a2fd2728d5b0a27db82c48053d7f',
+        '48418dc6c9b04fdc8689c7cb5b6eb987321a84e3',
     },
     add_generate_presigned_post: {'e30360f2bd893fabf47f5cdb04b0de420ccd414d'},
     generate_presigned_post: {
         'a3a834a08be2cf76c20ea137ba6b28e7a12f58ed',
+        'd93240c58dcda7b63cf2b7144ee0fea110f0e762',
     },
     add_generate_db_auth_token: {'f61014e6fac4b5c7ee7ac2d2bec15fb16fa9fbe5'},
     generate_db_auth_token: {'1f37e1e5982d8528841ce6b79f229b3e23a18959'},
+    add_dsql_generate_db_auth_token_methods: {
+        '95c68a1aac8ee549e11b5dc010b6bb03f9ea00ea',
+    },
+    _dsql_generate_db_auth_token: {
+        '53034b0475122209509db59fbd79a4ead70836cf',
+    },
+    dsql_generate_db_connect_auth_token: {
+        '29b5919b695113c55452f2325d0ff66dd719a647'
+    },
+    dsql_generate_db_connect_admin_auth_token: {
+        'd7e7a4899b8fd3a544dd1df95196517e2cfd5c84'
+    },
     # tokens.py
     create_token_resolver: {'b287f4879235a4292592a49b201d2b0bc2dbf401'},
     DeferredRefreshableToken.__init__: {
@@ -570,8 +586,7 @@ _API_DIGESTS = {
         'e7e5a8ce541110eb79bf98414171d3a1c137e32b'
     },
     S3RegionRedirectorv2.redirect_from_error: {
-        'ac37ca2ca48f7bde42d9659c01d5bd5bc08a78f9',
-        'bc01047b596b1d1113df7cc2481af9cca2a49267',
+        '8e3003ec881c7eab0945fe4b6e021ca488fbcd78',
     },
     S3RegionRedirectorv2.get_bucket_region: {
         'b5bbc8b010576668dc2812d657c4b48af79e8f99'
@@ -624,9 +639,8 @@ _API_DIGESTS = {
     inject_presigned_url_rds: {'b5d45b339686346e81b255d4e8c36e76d3fe6a78'},
     inject_presigned_url_ec2: {'48e09a5e4e95577e716be30f2d2706949261a07f'},
     parse_get_bucket_location: {'64ffbf5c6aa6ebd083f49371000fa046d0de1fc6'},
-    check_for_200_error: {'ded7f3aaef7b1a5d047c4dac86692ab55cbd7a13'},
-    _looks_like_special_case_error: {
-        '86946722d10a72b593483fca0abf30100c609178'
+    check_for_200_error: {
+        '3a00f0bea409528f8457d6569aecf05998094386',
     },
     # httpsession.py
     URLLib3Session: {
@@ -682,8 +696,7 @@ _API_DIGESTS = {
     AWSResponse.text: {'a724100ba9f6d51b333b8fe470fac46376d5044a'},
     # httpchecksum.py
     handle_checksum_body: {
-        '898cee7a7a5e5a02af7e0e65dcbb8122257b85df',
-        '6f15cc120818413e89aac088d130c729ba3d422c',
+        '040cb48d8ebfb5ca195d41deb55b38d1fcb489f8',
     },
     _handle_streaming_response: {
         '7ce971e012f9d4b04889f0af83f67281ed6a9e6e',
@@ -696,16 +709,18 @@ _API_DIGESTS = {
         '0761c4590c6addbe8c674e40fca9f7dd375a184b',
         '11dce986975df44f08ff61d7e86cba4f92f7c19f',
     },
+    AwsChunkedWrapper.read: {
+        '226db2259073a2b2e05f999e8ef55210394693d8',
+    },
     AwsChunkedWrapper._make_chunk: {
         '097361692f0fd6c863a17dd695739629982ef7e4'
     },
     AwsChunkedWrapper.__iter__: {'261e26d1061655555fe3dcb2689d963e43f80fb0'},
     apply_request_checksum: {
-        'bcc044f0655f30769994efab72b29e76d73f7e39',
-        '5ebac6a8f1475a6b42b356135bc5f5840ac07a55',
+        '6d904d118cd9d768935e38a60a73a46c67a8d440',
     },
     _apply_request_trailer_checksum: {
-        '28cdf19282be7cd2c99a734831ec4f489648bcc7'
+        '45f483dd8520bf67616a063bdf6386865aad3591',
     },
     # retryhandler.py
     retryhandler.create_retry_handler: {
@@ -749,15 +764,12 @@ _API_DIGESTS = {
 _PROTOCOL_PARSER_CONTENT = {'ec2', 'query', 'json', 'rest-json', 'rest-xml'}
 
 
-@pytest.mark.moto
 def test_protocol_parsers():
     # Check that no new parsers have been added
     current_parsers = set(PROTOCOL_PARSERS.keys())
     assert current_parsers == _PROTOCOL_PARSER_CONTENT
 
 
-# NOTE: this doesn't require moto but needs to be marked to run with coverage
-@pytest.mark.moto
 def test_patches():
     print(f"Botocore version: {botocore.__version__}")
 

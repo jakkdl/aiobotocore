@@ -1,5 +1,35 @@
 Changes
 -------
+2.20.1.dev0 (2025-02-24)
+^^^^^^^^^^^^^^^^^^^^^^^^
+* upstream http response header fixes to be more in-line with botocore
+
+2.20.0 (2025-02-19)
+^^^^^^^^^^^^^^^^^^^
+* patch `AwsChunkedWrapper.read`
+* bump botocore dependency specification
+
+2.19.0 (2025-01-22)
+^^^^^^^^^^^^^^^^^^^
+* support custom `ttl_dns_cache` connector configuration
+* relax botocore dependency specification
+
+2.18.0 (2025-01-17)
+^^^^^^^^^^^^^^^^^^^
+* bump botocore dependency specification
+
+2.17.0 (2025-01-06)
+^^^^^^^^^^^^^^^^^^^
+* relax botocore dependency specification
+* add missing dependencies `python-dateutil`, `jmespath`, `multidict`, and `urllib3`
+
+2.16.1 (2024-12-26)
+^^^^^^^^^^^^^^^^^^^
+* relax botocore dependency specification
+
+2.16.0 (2024-12-16)
+^^^^^^^^^^^^^^^^^^^
+* bump botocore dependency specification
 
 2.15.2 (2024-10-09)
 ^^^^^^^^^^^^^^^^^^^

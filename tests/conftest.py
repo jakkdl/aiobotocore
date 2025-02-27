@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import multiprocessing
 import os
 import random
 import re
@@ -31,6 +32,12 @@ if TYPE_CHECKING:
 host = '127.0.0.1'
 
 _PYCHARM_HOSTED = os.environ.get('PYCHARM_HOSTED') == '1'
+
+
+@pytest.fixture(scope="session", autouse=True)
+def always_spawn():
+    # enforce multiprocessing start method `spawn` to prevent deadlocks in the child
+    multiprocessing.set_start_method("spawn", force=True)
 
 
 @pytest.fixture(
@@ -132,7 +139,7 @@ def alternative_region():
 
 @pytest.fixture
 def signature_version():
-    return 's3'
+    return 'v4'
 
 
 @pytest.fixture
@@ -187,20 +194,15 @@ def config(request, region, signature_version):
 
 
 @pytest.fixture
+def aws_auth():
+    return {'aws_secret_access_key': 'xxx', 'aws_access_key_id': 'xxx'}
+
+
+@pytest.fixture
 def mocking_test():
     # change this flag for test with real aws
     # TODO: this should be merged with pytest.mark.moto
     return True
-
-
-def moto_config(endpoint_url):
-    kw = dict(
-        endpoint_url=endpoint_url,
-        aws_secret_access_key="xxx",
-        aws_access_key_id="xxx",
-    )
-
-    return kw
 
 
 @pytest.fixture
@@ -253,14 +255,15 @@ async def s3_client(
     session,
     region,
     config,
-    s3_server,
+    moto_server,
     mocking_test,
     s3_verify,
     patch_attributes,
+    aws_auth,
 ):
     # This depends on mock_attributes because we may want to test event listeners.
     # See the documentation of `mock_attributes` for details.
-    kw = moto_config(s3_server) if mocking_test else {}
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
 
     async with session.create_client(
         's3', region_name=region, config=config, verify=s3_verify, **kw
@@ -273,11 +276,12 @@ async def alternative_s3_client(
     session,
     alternative_region,
     signature_version,
-    s3_server,
+    moto_server,
     mocking_test,
+    aws_auth,
     request,
 ):
-    kw = moto_config(s3_server) if mocking_test else {}
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     kwargs = read_kwargs(request.node)
 
     config = AioConfig(
@@ -296,9 +300,9 @@ async def alternative_s3_client(
 
 @pytest.fixture
 async def dynamodb_client(
-    session, region, config, dynamodb2_server, mocking_test
+    session, region, config, moto_server, mocking_test, aws_auth
 ):
-    kw = moto_config(dynamodb2_server) if mocking_test else {}
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'dynamodb', region_name=region, config=config, **kw
     ) as client:
@@ -307,9 +311,9 @@ async def dynamodb_client(
 
 @pytest.fixture
 async def cloudformation_client(
-    session, region, config, cloudformation_server, mocking_test
+    session, region, config, moto_server, mocking_test, aws_auth
 ):
-    kw = moto_config(cloudformation_server) if mocking_test else {}
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'cloudformation', region_name=region, config=config, **kw
     ) as client:
@@ -317,8 +321,10 @@ async def cloudformation_client(
 
 
 @pytest.fixture
-async def sns_client(session, region, config, sns_server, mocking_test):
-    kw = moto_config(sns_server) if mocking_test else {}
+async def sns_client(
+    session, region, config, moto_server, mocking_test, aws_auth
+):
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'sns', region_name=region, config=config, **kw
     ) as client:
@@ -326,8 +332,10 @@ async def sns_client(session, region, config, sns_server, mocking_test):
 
 
 @pytest.fixture
-async def sqs_client(session, region, config, sqs_server, mocking_test):
-    kw = moto_config(sqs_server) if mocking_test else {}
+async def sqs_client(
+    session, region, config, moto_server, mocking_test, aws_auth
+):
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'sqs', region_name=region, config=config, **kw
     ) as client:
@@ -335,8 +343,10 @@ async def sqs_client(session, region, config, sqs_server, mocking_test):
 
 
 @pytest.fixture
-async def batch_client(session, region, config, batch_server, mocking_test):
-    kw = moto_config(batch_server) if mocking_test else {}
+async def batch_client(
+    session, region, config, moto_server, mocking_test, aws_auth
+):
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'batch', region_name=region, config=config, **kw
     ) as client:
@@ -344,8 +354,10 @@ async def batch_client(session, region, config, batch_server, mocking_test):
 
 
 @pytest.fixture
-async def lambda_client(session, region, config, lambda_server, mocking_test):
-    kw = moto_config(lambda_server) if mocking_test else {}
+async def lambda_client(
+    session, region, config, moto_server, mocking_test, aws_auth
+):
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'lambda', region_name=region, config=config, **kw
     ) as client:
@@ -353,8 +365,10 @@ async def lambda_client(session, region, config, lambda_server, mocking_test):
 
 
 @pytest.fixture
-async def iam_client(session, region, config, iam_server, mocking_test):
-    kw = moto_config(iam_server) if mocking_test else {}
+async def iam_client(
+    session, region, config, moto_server, mocking_test, aws_auth
+):
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'iam', region_name=region, config=config, **kw
     ) as client:
@@ -362,8 +376,10 @@ async def iam_client(session, region, config, iam_server, mocking_test):
 
 
 @pytest.fixture
-async def rds_client(session, region, config, rds_server, mocking_test):
-    kw = moto_config(rds_server) if mocking_test else {}
+async def rds_client(
+    session, region, config, moto_server, mocking_test, aws_auth
+):
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'rds', region_name=region, config=config, **kw
     ) as client:
@@ -371,8 +387,10 @@ async def rds_client(session, region, config, rds_server, mocking_test):
 
 
 @pytest.fixture
-async def ec2_client(session, region, config, ec2_server, mocking_test):
-    kw = moto_config(ec2_server) if mocking_test else {}
+async def ec2_client(
+    session, region, config, moto_server, mocking_test, aws_auth
+):
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'ec2', region_name=region, config=config, **kw
     ) as client:
@@ -381,9 +399,9 @@ async def ec2_client(session, region, config, ec2_server, mocking_test):
 
 @pytest.fixture
 async def kinesis_client(
-    session, region, config, kinesis_server, mocking_test
+    session, region, config, moto_server, mocking_test, aws_auth
 ):
-    kw = moto_config(kinesis_server) if mocking_test else {}
+    kw = {'endpoint_url': moto_server, **aws_auth} if mocking_test else {}
     async with session.create_client(
         'kinesis', region_name=region, config=config, **kw
     ) as client:
@@ -501,8 +519,8 @@ def tempdir():
 
 
 @pytest.fixture
-def create_object(s3_client, bucket_name):
-    async def _f(key_name, body='foo'):
+def create_object(s3_client, bucket_name: str):
+    async def _f(key_name: str, body='foo', **kwargs):
         r = await s3_client.put_object(
             Bucket=bucket_name, Key=key_name, Body=body
         )

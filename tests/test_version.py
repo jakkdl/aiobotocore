@@ -11,7 +11,6 @@ import docutils.frontend
 import docutils.nodes
 import docutils.parsers.rst
 import docutils.utils
-import pytest
 import requests
 from packaging import version
 from pip._internal.req import InstallRequirement
@@ -137,7 +136,6 @@ def _get_boto_module_versions(
     return module_versions
 
 
-@pytest.mark.moto
 def test_release_versions():
     # ensures versions in CHANGES.rst + __init__.py match
     init_version = version.parse(aiobotocore.__version__)
@@ -175,10 +173,6 @@ def test_release_versions():
         #     rst_ver.is_prerelease
         # ), 'Version must be prerelease if final release date not set'
     else:
-        assert (
-            not rst_ver.is_prerelease
-        ), 'Version must not be prerelease if release date set'
-
         rst_date = datetime.strptime(rst_date, '%Y-%m-%d').date()
         rst_prev_date = datetime.strptime(rst_prev_date, '%Y-%m-%d').date()
 

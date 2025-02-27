@@ -46,8 +46,6 @@ def lambda_handler(event, context):
     return _process_lambda(lambda_src)
 
 
-@pytest.mark.moto
-@pytest.mark.asyncio
 async def test_run_lambda(
     iam_client, lambda_client, aws_lambda_zip, current_http_backend
 ):

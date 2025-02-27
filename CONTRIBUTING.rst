@@ -13,27 +13,42 @@ First of all, clone the repository::
 
     $ git clone git@github.com:aio-libs/aiobotocore.git
 
-Create virtualenv with at least python3.8 (older versions are not supported).
-For example, using ``virtualenvwrapper`` commands could look like::
+Make sure the Python package and project manager `uv <https://docs.astral.sh/uv/>`_ is installed.
 
-   $ cd aiobotocore
-   $ mkvirtualenv --python=`which python3.8` aiobotocore
+Create a virtual environment::
 
+    $ cd aiobotocore
+    $ uv venv
 
-After that, please install libraries required for development::
+Install pre-commit hooks::
 
-    $ pip install pip-tools
-    $ pip-compile --all-extras pyproject.toml requirements-dev.in
-    $ pip-sync
-    $ pip install -e ".[awscli,boto3]"
+    $ uv run pre-commit install
 
-Congratulations, you are ready to run the test suite::
+Congratulations, you are ready to run the test suite.
 
-    $ make cov
+There are two set of tests, those that can be mocked through `moto <https://github.com/getmoto/moto>`_ running in docker, and those that require running against a personal amazon key. The CI only runs the moto tests.
+
+To run the moto tests::
+
+    $ uv run make mototest
+
+To run the non-moto tests, make sure you have your amazon key and secret accessible via environment variables::
+
+    $ export AWS_ACCESS_KEY_ID=xxx
+    $ export AWS_SECRET_ACCESS_KEY=xxx
+    $ export AWS_DEFAULT_REGION=xxx # e.g. us-west-2
+
+Execute full tests suite::
+
+    $ uv run make test
+
+Execute full tests suite with coverage::
+
+    $ uv run make cov
 
 To run individual use following command::
 
-    $ pytest -sv tests/test_monitor.py -k test_name
+    $ uv run pytest -sv tests/test_monitor.py -k test_name
 
 
 Reporting an Issue

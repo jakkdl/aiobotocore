@@ -2,12 +2,15 @@
 name: CI/CD
 
 on:
+  merge_group:
   push:
     branches:
     - master
     tags:
     - >-
       [0-9]+.[0-9]+.[0-9]+
+    - >-
+      [0-9]+.[0-9]+.[0-9]+.dev[0-9]+
   pull_request:
     branches:
     - master
@@ -20,21 +23,17 @@ env:
 jobs:
   build:
     name: Build distribution 📦
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.x
-    - name: Install build dependencies
-      run: python -m pip install build twine
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
     - name: Build distribution 📦
-      run: python -m build
+      run: uv build
     - name: Check distribution 📦
-      run: python -m twine check --strict dist/*
+      run: uvx twine check --strict dist/*
     - name: Upload distribution 📦
       uses: actions/upload-artifact@v4
       with:
@@ -42,8 +41,9 @@ jobs:
         path: dist/
 
   test:
-    name: Test Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
         python-version:
@@ -54,7 +54,21 @@ jobs:
         - 3.11
         - 3.12
         - 3.13
+        os:
+        - ubuntu-24.04
+        - ubuntu-24.04-arm
+        include:
+        - experimental: false
+        - experimental: true  # no reliable moto release available
+          python-version: 3.8
+          os: ubuntu-24.04-arm
+        - upload-coverage: false
+        - upload-coverage: true
+          python-version: 3.11
+          os: ubuntu-24.04
       fail-fast: false
+    env:
+      UV_FROZEN: 1
     timeout-minutes: 5
 
     steps:
@@ -62,36 +76,30 @@ jobs:
       uses: actions/checkout@v4
       with:
         submodules: true
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: Lock and sync dependencies
-      run: |
-        python -m pip install -U pip pip-tools
-        pip-compile --all-extras pyproject.toml requirements-dev.in
-        pip-sync
-        pip install -e ".[awscli,boto3]"
     - name: Run pre-commit hooks
       run: |
-        make pre-commit
+        uv run make pre-commit
     - name: Run unittests
       env:
         COLOR: 'yes'
       run: |
-        make mototest
-    - name: Run unittests without httpx
-      # run it on same python as codecov
-      if: matrix.python-version == '3.11'
-      env:
-        COLOR: 'yes'
-      run: |
-        pip uninstall --yes httpx
-        HTTP_BACKEND='aiohttp' FLAGS='--cov-append' make mototest
+        uv run make mototest
+    # TODO: I don't know how to do this properly with uv-managed venv
+    # - name: Run unittests without httpx installed
+    #   # run it on same python as codecov
+    #   if: matrix.python-version == '3.11'
+    #   env:
+    #     COLOR: 'yes'
+    #   run: |
+    #     pip uninstall --yes httpx
+    #     HTTP_BACKEND='aiohttp' FLAGS='--cov-append' uv run make mototest
     - name: Upload coverage to Codecov
-      if: matrix.python-version == '3.11'
-      uses: codecov/codecov-action@v4.5.0
+      if: ${{ matrix.upload-coverage }}
+      uses: codecov/codecov-action@v5.4.0
       with:
         token: ${{ secrets.CODECOV_TOKEN }}  # not required for public repos
         files: ./coverage.xml
@@ -100,13 +108,26 @@ jobs:
         fail_ci_if_error: true  # optional (default = false)
         verbose: true  # optional (default = false)
 
+  check:  # This job does nothing and is only used for the branch protection
+    if: always()
+    needs:
+    - build
+    - test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+
+    steps:
+    - name: Decide whether the needed jobs succeeded or failed
+      uses: re-actors/alls-green@release/v1
+      with:
+        jobs: ${{ toJSON(needs) }}
+
   pypi-publish:
     name: Publish Python 🐍 distribution 📦 to PyPI
     if: github.ref_type == 'tag'  # only publish on tag pushes
     needs:
-    - build
-    - test
-    runs-on: ubuntu-latest
+    - check
+    runs-on: ubuntu-24.04
     environment:
       name: pypi
       url: https://pypi.org/project/aiobotocore/${{ github.ref_name }}
@@ -121,5 +142,9 @@ jobs:
       with:
         name: python-package-distributions
         path: dist/
+    - name: Check if distribution 📦 names match git tag
+      run: |
+        test -f "dist/aiobotocore-${{ github.ref_name }}.tar.gz"
+        test -f "dist/aiobotocore-${{ github.ref_name }}-py3-none-any.whl"
     - name: Publish distribution 📦 to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1

@@ -82,7 +82,7 @@ Basic Example
                 assert await stream.read() == data
 
             # list s3 objects using paginator
-            paginator = client.get_paginator('list_objects')
+            paginator = client.get_paginator('list_objects_v2')
             async for result in paginator.paginate(Bucket=bucket, Prefix=folder):
                 for c in result.get('Contents', []):
                     print(c)
@@ -162,39 +162,6 @@ Due to the way boto3 is implemented, its highly likely that even if services are
 stick ``await`` in front of methods to make them async, e.g. ``await client.list_named_queries()`` would asynchronous list all of the named Athena queries.
 
 If a service is not listed here and you could do with some tests or examples feel free to raise an issue.
-
-Run Tests
----------
-
-There are two set of tests, those that can be mocked through `moto <https://github.com/getmoto/moto>`_ running in docker, and those that require running against a personal amazon key. The CI only runs the moto tests.
-
-To run the moto tests:
-
-::
-
-    $ make mototest
-
-To run the non-moto tests:
-
-Make sure you have development requirements installed and your amazon key and
-secret accessible via environment variables:
-
-::
-
-    $ pip install pip-tools
-    $ pip-compile --all-extras pyproject.toml
-    $ pip-sync
-    $ pip install -e ".[awscli,boto3]"
-    $ export AWS_ACCESS_KEY_ID=xxx
-    $ export AWS_SECRET_ACCESS_KEY=xxx
-    $ export AWS_DEFAULT_REGION=xxx # e.g. us-west-2
-
-Execute tests suite:
-
-::
-
-    $ make test
-
 
 
 Enable type checking and code completion

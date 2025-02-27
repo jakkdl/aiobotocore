@@ -1,4 +1,9 @@
 ---
+ci:
+  autofix_prs: false
+  autoupdate_schedule: quarterly
+  skip: [uv-lock]  # https://github.com/astral-sh/uv/issues/10167
+
 repos:
 - repo: 'https://github.com/pre-commit/pre-commit-hooks'
   rev: v4.5.0
@@ -16,13 +21,17 @@ repos:
   - id: ruff
     args: [--fix]
   - id: ruff-format
+- repo: https://github.com/astral-sh/uv-pre-commit
+  rev: 0.6.0
+  hooks:
+  - id: uv-lock
 - repo: https://github.com/adrienverge/yamllint
   rev: v1.35.1
   hooks:
   - id: yamllint
     args: [--strict]
 - repo: https://github.com/python-jsonschema/check-jsonschema
-  rev: 0.29.2
+  rev: 0.30.0
   hooks:
   - id: check-dependabot
   - id: check-github-workflows

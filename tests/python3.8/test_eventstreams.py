@@ -6,7 +6,7 @@ import pytest
 import aiobotocore.session
 
 
-@pytest.mark.asyncio
+@pytest.mark.localonly
 async def test_kinesis_stream_json_parser(
     request, exit_stack: AsyncExitStack, current_http_backend: str
 ):

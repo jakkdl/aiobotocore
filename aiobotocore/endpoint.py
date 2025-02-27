@@ -17,7 +17,6 @@ from botocore.endpoint import (
 )
 from botocore.hooks import first_non_none_response
 from requests.models import Response
-from urllib3._collections import HTTPHeaderDict
 
 from aiobotocore.httpchecksum import handle_checksum_body
 from aiobotocore.httpsession import AIOHTTPSession
@@ -49,21 +48,9 @@ async def convert_to_response_dict(
         * body (string or file-like object)
 
     """
-    if httpx and isinstance(http_response.raw, httpx.Response):
-        raw_headers = http_response.raw.headers.raw
-    else:  # aiohttp.ClientResponse
-        raw_headers = http_response.raw.raw_headers
+    headers = http_response.headers
     response_dict: dict[str, Any] = {
-        # botocore converts keys to str, so make sure that they are in
-        # the expected case. See detailed discussion here:
-        # https://github.com/aio-libs/aiobotocore/pull/116
-        # aiohttp's CIMultiDict camel cases the headers :(
-        'headers': HTTPHeaderDict(
-            {
-                k.decode('utf-8').lower(): v.decode('utf-8')
-                for k, v in raw_headers
-            }
-        ),
+        'headers': headers,
         'status_code': http_response.status_code,
         'context': {
             'operation_name': operation_model.name,

@@ -16,6 +16,31 @@ from aiobotocore.response import StreamingBody
 
 
 class AioAwsChunkedWrapper(AwsChunkedWrapper):
+    async def read(self, size=None):
+        # Normalize "read all" size values to None
+        if size is not None and size <= 0:
+            size = None
+
+        # If the underlying body is done and we have nothing left then
+        # end the stream
+        if self._complete and not self._remaining:
+            return b""
+
+        # While we're not done and want more bytes
+        want_more_bytes = size is None or size > len(self._remaining)
+        while not self._complete and want_more_bytes:
+            self._remaining += await self._make_chunk()
+            want_more_bytes = size is None or size > len(self._remaining)
+
+        # If size was None, we want to return everything
+        if size is None:
+            size = len(self._remaining)
+
+        # Return a chunk up to the size asked for
+        to_return = self._remaining[:size]
+        self._remaining = self._remaining[size:]
+        return to_return
+
     async def _make_chunk(self):
         # NOTE: Chunk size is not deterministic as read could return less. This
         # means we cannot know the content length of the encoded aws-chunked
@@ -105,7 +130,7 @@ async def handle_checksum_body(
         response["context"]["checksum"] = checksum_context
         return
 
-    logger.info(
+    logger.debug(
         f'Skipping checksum validation. Response did not contain one of the '
         f'following algorithms: {algorithms}.'
     )
@@ -156,6 +181,11 @@ def apply_request_checksum(request):
         raise FlexibleChecksumError(
             error_msg="Unknown checksum variant: {}".format(algorithm["in"])
         )
+    if "request_algorithm_header" in checksum_context:
+        request_algorithm_header = checksum_context["request_algorithm_header"]
+        request["headers"][request_algorithm_header["name"]] = (
+            request_algorithm_header["value"]
+        )
 
 
 def _apply_request_trailer_checksum(request):
@@ -186,6 +216,12 @@ def _apply_request_trailer_checksum(request):
         # Send the decoded content length if we can determine it. Some
         # services such as S3 may require the decoded content length
         headers["X-Amz-Decoded-Content-Length"] = str(content_length)
+
+        if "Content-Length" in headers:
+            del headers["Content-Length"]
+            logger.debug(
+                "Removing the Content-Length header since 'chunked' is specified for Transfer-Encoding."
+            )
 
     if isinstance(body, (bytes, bytearray)):
         body = io.BytesIO(body)
