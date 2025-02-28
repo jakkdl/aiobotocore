@@ -28,7 +28,7 @@ from aiobotocore.tokens import AioSSOTokenProvider
 def parametrize(cases):
     return pytest.mark.parametrize(
         "test_case",
-        deepcopy(cases),
+        cases,
         ids=[c["documentation"] for c in cases],
     )
 
@@ -286,6 +286,10 @@ async def test_sso_token_provider_refresh(test_case):
     }
     cache_key = "d033e22ae348aeb5660fc2140aec35850c4da997"
     token_cache = {}
+
+    # deepcopy the test case so the test can be parametrized against the same
+    # test case w/ aiohttp & httpx
+    test_case = deepcopy(test_case)
 
     # Prepopulate the token cache
     cached_token = test_case.pop("cachedToken", None)
