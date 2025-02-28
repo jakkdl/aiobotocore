@@ -197,15 +197,9 @@ async def test_can_get_and_put_object(
     await create_object(key_name, body='body contents')
 
     resp = await s3_client.get_object(Bucket=bucket_name, Key=key_name)
-    if httpx and isinstance(resp['Body'], httpx.Response):
-        data = await resp['Body'].aread()
-        # note that calling `aclose()` is redundant, httpx will auto-close when the
-        # data is fully read
-        await resp['Body'].aclose()
-    else:
-        data = await resp['Body'].read()
-        # TODO: think about better api and make behavior like in aiohttp
-        resp['Body'].close()
+    data = await resp['Body'].read()
+    # TODO: think about better api and make behavior like in aiohttp
+    await resp['Body'].aclose()
     assert data == b'body contents'
 
     # now test checksum'd file
@@ -214,10 +208,7 @@ async def test_can_get_and_put_object(
     resp = await s3_client.get_object(
         Bucket=bucket_name, Key=key_name, ChecksumMode="ENABLED"
     )
-    if httpx and isinstance(resp['Body'], httpx.Response):
-        data = await resp['Body'].aread()
-    else:
-        data = await resp['Body'].read()
+    data = await resp['Body'].read()
     assert data == b'abcd'
 
 
@@ -280,18 +271,18 @@ async def test_get_object_stream_wrapper(
     response = await s3_client.get_object(Bucket=bucket_name, Key='foobarbaz')
     body = response['Body']
     if httpx and isinstance(body, httpx.Response):
+        # httpx does not support `.aread(1)`
         byte_iterator = body.aiter_raw(1)
         chunk1 = await byte_iterator.__anext__()
         chunk2 = b""
         async for b in byte_iterator:
             chunk2 += b
-        await body.aclose()
     else:
         chunk1 = await body.read(1)
         chunk2 = await body.read()
-        body.close()
     assert chunk1 == b'b'
     assert chunk2 == b'ody contents'
+    await body.aclose()
 
 
 async def test_get_object_stream_context(
@@ -299,12 +290,8 @@ async def test_get_object_stream_context(
 ):
     await create_object('foobarbaz', body='body contents')
     response = await s3_client.get_object(Bucket=bucket_name, Key='foobarbaz')
-    # httpx does not support context manager
-    if httpx and isinstance(response['Body'], httpx.Response):
-        data = await response['Body'].aread()
-    else:
-        async with response['Body'] as stream:
-            data = await stream.read()
+    async with response['Body'] as stream:
+        data = await stream.read()
     assert data == b'body contents'
 
 
@@ -399,12 +386,8 @@ async def test_unicode_key_put_list(s3_client, bucket_name, create_object):
     assert len(parsed['Contents']) == 1
     assert parsed['Contents'][0]['Key'] == key_name
     parsed = await s3_client.get_object(Bucket=bucket_name, Key=key_name)
-    if httpx and isinstance(parsed['Body'], httpx.Response):
-        data = await parsed['Body'].aread()
-        await parsed['Body'].aclose()
-    else:
-        data = await parsed['Body'].read()
-        parsed['Body'].close()
+    data = await parsed['Body'].read()
+    await parsed['Body'].aclose()
     assert data == b'foo'
 
 
@@ -456,12 +439,8 @@ async def test_copy_with_quoted_char(s3_client, create_object, bucket_name):
 
     # Now verify we can retrieve the copied object.
     resp = await s3_client.get_object(Bucket=bucket_name, Key=key_name2)
-    if httpx and isinstance(resp['Body'], httpx.Response):
-        data = await resp['Body'].aread()
-        await resp['Body'].aclose()
-    else:
-        data = await resp['Body'].read()
-        resp['Body'].close()
+    data = await resp['Body'].read()
+    await resp['Body'].aclose()
     assert data == b'foo'
 
 
@@ -478,12 +457,8 @@ async def test_copy_with_query_string(s3_client, create_object, bucket_name):
 
     # Now verify we can retrieve the copied object.
     resp = await s3_client.get_object(Bucket=bucket_name, Key=key_name2)
-    if httpx and isinstance(resp['Body'], httpx.Response):
-        data = await resp['Body'].aread()
-        await resp['Body'].aclose()
-    else:
-        data = await resp['Body'].read()
-        resp['Body'].close()
+    data = await resp['Body'].read()
+    await resp['Body'].aclose()
     assert data == b'foo'
 
 
@@ -500,12 +475,8 @@ async def test_can_copy_with_dict_form(s3_client, create_object, bucket_name):
 
     # Now verify we can retrieve the copied object.
     resp = await s3_client.get_object(Bucket=bucket_name, Key=key_name2)
-    if httpx and isinstance(resp['Body'], httpx.Response):
-        data = await resp['Body'].aread()
-        await resp['Body'].aclose()
-    else:
-        data = await resp['Body'].read()
-        resp['Body'].close()
+    data = await resp['Body'].read()
+    await resp['Body'].aclose()
     assert data == b'foo'
 
 
@@ -527,12 +498,8 @@ async def test_can_copy_with_dict_form_with_version(
 
     # Now verify we can retrieve the copied object.
     resp = await s3_client.get_object(Bucket=bucket_name, Key=key_name2)
-    if httpx and isinstance(resp['Body'], httpx.Response):
-        data = await resp['Body'].aread()
-        await resp['Body'].aclose()
-    else:
-        data = await resp['Body'].read()
-        resp['Body'].close()
+    data = await resp['Body'].read()
+    await resp['Body'].aclose()
     assert data == b'foo'
 
 
@@ -570,6 +537,7 @@ async def test_presign_with_existing_query_string_values(
         'get_object', Params=params
     )
     # Try to retrieve the object using the presigned url.
+    # TODO: compatibility layer between httpx.AsyncClient and aiohttp.ClientSession?
     if httpx and isinstance(aio_session, httpx.AsyncClient):
         async with aio_session.stream("GET", presigned_url) as resp:
             data = await resp.aread()
@@ -625,12 +593,8 @@ async def test_can_follow_signed_url_redirect(
     resp = await alternative_s3_client.get_object(
         Bucket=bucket_name, Key='foobarbaz'
     )
-    if httpx and isinstance(resp['Body'], httpx.Response):
-        data = await resp['Body'].aread()
-        await resp['Body'].aclose()
-    else:
-        data = await resp['Body'].read()
-        resp['Body'].close()
+    data = await resp['Body'].read()
+    await resp['Body'].aclose()
     assert data == b'foo'
 
 

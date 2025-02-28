@@ -70,11 +70,8 @@ async def test_run_lambda(
         Payload=json.dumps({"hello": "world"}),
     )
 
-    if httpx and isinstance(invoke_response['Payload'], httpx.Response):
-        data = await invoke_response['Payload'].aread()
-    else:
-        async with invoke_response['Payload'] as stream:
-            data = await stream.read()
+    async with invoke_response['Payload'] as stream:
+        data = await stream.read()
 
     log_result = base64.b64decode(invoke_response["LogResult"])
 

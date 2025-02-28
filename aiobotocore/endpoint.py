@@ -16,7 +16,7 @@ from botocore.hooks import first_non_none_response
 
 from aiobotocore.httpchecksum import handle_checksum_body
 from aiobotocore.httpsession import AIOHTTPSession
-from aiobotocore.response import StreamingBody
+from aiobotocore.response import HttpxStreamingBody, StreamingBody
 
 try:
     import httpx
@@ -55,7 +55,7 @@ async def convert_to_response_dict(http_response, operation_model):
         response_dict['body'] = http_response.raw
     elif operation_model.has_streaming_output:
         if httpx and isinstance(http_response.raw, httpx.Response):
-            response_dict['body'] = http_response.raw
+            response_dict['body'] = HttpxStreamingBody(http_response.raw)
         else:
             length = response_dict['headers'].get('content-length')
             response_dict['body'] = StreamingBody(http_response.raw, length)
