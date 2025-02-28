@@ -24,7 +24,8 @@ import pytest
 
 import aiobotocore.session
 from aiobotocore.config import AioConfig
-from aiobotocore.httpsession import AIOHTTPSession, HttpxSession
+from aiobotocore.httpsession import AIOHTTPSession
+from aiobotocore.httpxsession import HttpxSession
 
 if TYPE_CHECKING:
     from _pytest.nodes import Node

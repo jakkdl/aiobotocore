@@ -8,7 +8,7 @@ import aiobotocore.session
 
 @pytest.mark.localonly
 async def test_kinesis_stream_json_parser(
-    request, exit_stack: AsyncExitStack, current_http_backend: str
+    exit_stack: AsyncExitStack, current_http_backend: str
 ):
     # unfortunately moto doesn't support kinesis register_stream_consumer +
     # subscribe_to_shard yet

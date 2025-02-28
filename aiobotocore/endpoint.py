@@ -1,7 +1,4 @@
-from __future__ import annotations
-
 import asyncio
-from typing import Any
 
 from botocore.endpoint import (
     DEFAULT_TIMEOUT,
@@ -16,7 +13,6 @@ from botocore.endpoint import (
     logger,
 )
 from botocore.hooks import first_non_none_response
-from requests.models import Response
 
 from aiobotocore.httpchecksum import handle_checksum_body
 from aiobotocore.httpsession import AIOHTTPSession
@@ -30,9 +26,7 @@ except ImportError:
 DEFAULT_HTTP_SESSION_CLS = AIOHTTPSession
 
 
-async def convert_to_response_dict(
-    http_response: Response, operation_model
-) -> dict[str, Any]:
+async def convert_to_response_dict(http_response, operation_model):
     """Convert an HTTP response object to a request dict.
 
     This converts the requests library's HTTP response object to
@@ -48,9 +42,8 @@ async def convert_to_response_dict(
         * body (string or file-like object)
 
     """
-    headers = http_response.headers
-    response_dict: dict[str, Any] = {
-        'headers': headers,
+    response_dict = {
+        'headers': http_response.headers,
         'status_code': http_response.status_code,
         'context': {
             'operation_name': operation_model.name,
@@ -287,7 +280,7 @@ class AioEndpoint(Endpoint):
             return False
         else:
             # Request needs to be retried, and we need to sleep
-            # for the specified number of seconds.
+            # for the specified number of times.
             logger.debug(
                 "Response received to retry, sleeping for %s seconds",
                 handler_response,

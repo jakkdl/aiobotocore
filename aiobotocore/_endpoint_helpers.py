@@ -36,7 +36,7 @@ if httpx is not None:
     )
 
 
-def _text(s, encoding='utf-8', errors='strict') -> str:
+def _text(s, encoding='utf-8', errors='strict'):
     if isinstance(s, bytes):
         return s.decode(encoding, errors)
     return s  # pragma: no cover

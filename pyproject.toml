@@ -81,6 +81,8 @@ dev = [
     "requests >= 2.32.3, < 3", # Used in test_version.py
     "time-machine >= 2.15.0, < 3", # Used in test_signers.py
     "tomli; python_version<'3.11'", # Used in test_version.py
+]
+httpx = [
     "httpx"
 ]
 
@@ -88,6 +90,7 @@ dev = [
 default-groups = [
     "botocore-dev",
     "dev",
+    "httpx",
 ]
 required-version = ">=0.6.0"
 

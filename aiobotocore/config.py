@@ -4,7 +4,7 @@ import botocore.client
 from botocore.exceptions import ParamValidationError
 
 from aiobotocore.endpoint import DEFAULT_HTTP_SESSION_CLS
-from aiobotocore.httpsession import HttpxSession
+from aiobotocore.httpxsession import HttpxSession
 
 
 class AioConfig(botocore.client.Config):

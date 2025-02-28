@@ -6,7 +6,8 @@ from botocore.config import Config
 from botocore.exceptions import ParamValidationError, ReadTimeoutError
 
 from aiobotocore.config import AioConfig
-from aiobotocore.httpsession import AIOHTTPSession, HttpxSession
+from aiobotocore.httpsession import AIOHTTPSession
+from aiobotocore.httpxsession import HttpxSession
 from aiobotocore.session import AioSession, get_session
 from tests.mock_server import AIOServer
 

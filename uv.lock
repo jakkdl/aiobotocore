@@ -43,7 +43,6 @@ dev = [
     { name = "dill" },
     { name = "docker" },
     { name = "docutils" },
-    { name = "httpx" },
     { name = "moto", version = "5.0.28", source = { registry = "https://pypi.org/simple" }, extra = ["awslambda", "batch", "cloudformation", "dynamodb", "s3", "server"], marker = "python_full_version < '3.9'" },
     { name = "moto", version = "5.1.0", source = { registry = "https://pypi.org/simple" }, extra = ["awslambda", "batch", "cloudformation", "dynamodb", "s3", "server"], marker = "python_full_version >= '3.9'" },
     { name = "packaging" },
@@ -55,6 +54,9 @@ dev = [
     { name = "time-machine", version = "2.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "time-machine", version = "2.16.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
+]
+httpx = [
+    { name = "httpx" },
 ]
 
 [package.metadata]
@@ -83,7 +85,6 @@ dev = [
     { name = "dill", specifier = ">=0.3.3,<0.4" },
     { name = "docker", specifier = ">=7.1,<8" },
     { name = "docutils", specifier = ">=0.16,<0.22" },
-    { name = "httpx" },
     { name = "moto", extras = ["server", "s3", "sqs", "awslambda", "dynamodb", "cloudformation", "sns", "batch", "ec2", "rds"], specifier = ">=5.0.11,<6" },
     { name = "packaging", specifier = ">=24.1,<25" },
     { name = "pip", specifier = ">=24.3.1,<26" },
@@ -93,6 +94,7 @@ dev = [
     { name = "time-machine", specifier = ">=2.15.0,<3" },
     { name = "tomli", marker = "python_full_version < '3.11'" },
 ]
+httpx = [{ name = "httpx" }]
 
 [[package]]
 name = "aiohappyeyeballs"
