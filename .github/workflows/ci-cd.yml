@@ -61,14 +61,15 @@ jobs:
         - ubuntu-24.04-arm
         no-httpx: [false]
         include:
+        # this needs to be first, or to set matrix.experimental and
+        # matrix.upload-coverage; otherwise they're undefined
+        - no-httpx: true
+          python-version: 3.13
+          os: ubuntu-24.04
         - experimental: false
         - experimental: true  # no reliable moto release available
           python-version: 3.8
           os: ubuntu-24.04-arm
-        - no-httpx: true
-          python-version: 3.13
-          os: ubuntu-24.04
-          experimental: false
         - upload-coverage: false
         # - upload-coverage: true
         #   python-version: 3.11
