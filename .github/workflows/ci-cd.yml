@@ -42,12 +42,12 @@ jobs:
 
   test:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}${{
-      matrix.no_httpx }}
+      matrix.color }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
       matrix:
-        no_httpx: ['0']
+        # no_httpx: ['0']
         python-version:
         - 3.8
         - 3.9
@@ -60,7 +60,7 @@ jobs:
         - ubuntu-24.04
         - ubuntu-24.04-arm
         include:
-        - no_httpx: '1'
+        - color: green
         - experimental: false
         - experimental: true  # no reliable moto release available
           python-version: 3.8
