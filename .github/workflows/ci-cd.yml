@@ -59,14 +59,14 @@ jobs:
         os:
         - ubuntu-24.04
         - ubuntu-24.04-arm
-        no_httpx: [false]
+        no-httpx: [false]
         include:
         - experimental: false
         - experimental: true  # no reliable moto release available
           python-version: 3.8
-          no_httpx: false
+          no-httpx: false
           os: ubuntu-24.04-arm
-        - no_httpx: true
+        - no-httpx: true
           python-version: 3.13
           os: ubuntu-24.04
           experimental: false
