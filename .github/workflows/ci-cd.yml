@@ -69,6 +69,7 @@ jobs:
         - color: green
           python-version: 3.13
           os: ubuntu-24.04
+          experimental: false
         - upload-coverage: false
         # - upload-coverage: true
         #   python-version: 3.11
