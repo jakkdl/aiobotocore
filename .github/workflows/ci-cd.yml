@@ -67,6 +67,9 @@ jobs:
         # - upload-coverage: true
         #   python-version: 3.11
         #   os: ubuntu-24.04
+        - python: 3.13
+          os: ubuntu-24.04
+          no_httpx: '1'
       fail-fast: false
     env:
       UV_FROZEN: 1
