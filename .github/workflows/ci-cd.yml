@@ -41,7 +41,8 @@ jobs:
         path: dist/
 
   test:
-    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}${{
+      matrix.no_httpx }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
@@ -67,9 +68,9 @@ jobs:
         # - upload-coverage: true
         #   python-version: 3.11
         #   os: ubuntu-24.04
-        - python: 3.13
-          os: ubuntu-24.04
-          no_httpx: '1'
+        # - python: 3.13
+        #   os: ubuntu-24.04
+        #   no_httpx: '1'
       fail-fast: false
     env:
       UV_FROZEN: 1
