@@ -64,9 +64,9 @@ jobs:
           python-version: 3.8
           os: ubuntu-24.04-arm
         - upload-coverage: false
-        - upload-coverage: true
-          python-version: 3.11
-          os: ubuntu-24.04
+        # - upload-coverage: true
+        #   python-version: 3.11
+        #   os: ubuntu-24.04
       fail-fast: false
     env:
       UV_FROZEN: 1
