@@ -42,7 +42,7 @@ jobs:
 
   test:
     name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}${{
-      matrix.no_httpx }}
+      matrix.no-httpx && ' no-httpx' || '' }}
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.experimental }}
     strategy:
