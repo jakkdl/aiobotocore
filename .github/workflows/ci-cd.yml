@@ -61,8 +61,6 @@ jobs:
         - ubuntu-24.04-arm
         include:
         - no_httpx: '1'
-          python-version: 3.8
-          os: ubuntu-24.04-arm
         - experimental: false
         - experimental: true  # no reliable moto release available
           python-version: 3.8
