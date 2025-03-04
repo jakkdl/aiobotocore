@@ -61,22 +61,20 @@ jobs:
         - ubuntu-24.04-arm
         no-httpx: [false]
         include:
-        # this needs to be first, or to set matrix.experimental and
-        # matrix.upload-coverage; otherwise they're undefined
-        - no-httpx: true
-          python-version: 3.13
-          os: ubuntu-24.04
         - experimental: false
         - experimental: true  # no reliable moto release available
           python-version: 3.8
           os: ubuntu-24.04-arm
         - upload-coverage: false
-        # - upload-coverage: true
-        #   python-version: 3.11
-        #   os: ubuntu-24.04
-        # - python: 3.13
-        #   os: ubuntu-24.04
-        #   no_httpx: '1'
+        - upload-coverage: true
+          python-version: 3.11
+          os: ubuntu-24.04
+        - no-httpx: true
+          python-version: 3.13
+          os: ubuntu-24.04
+          # this is necessary for matrix.experimental to be defined, otherwise
+          # CI breaks because continue-on-error is undefined
+          experimental: false
       fail-fast: false
     env:
       UV_FROZEN: 1
@@ -91,23 +89,22 @@ jobs:
       uses: astral-sh/setup-uv@v5
       with:
         python-version: ${{ matrix.python-version }}
-        enable-cache: false
     - name: Run pre-commit hooks
       run: |
-        echo "hello"
+        uv run make pre-commit
     - name: Run unittests
       if: ${{ ! matrix.no_httpx }}
       env:
         COLOR: 'yes'
       run: |
-        echo "mototest"
+        uv run make mototest
     - name: Run unittests without httpx installed
       if: ${{ matrix.no_httpx }}
       env:
         COLOR: 'yes'
         HTTP_BACKEND: 'aiohttp'
       run: |
-        echo "no httpx"
+        uv run --no-group=httpx make mototest
     - name: Upload coverage to Codecov
       if: ${{ matrix.upload-coverage }}
       uses: codecov/codecov-action@v5.4.0
