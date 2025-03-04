@@ -66,6 +66,9 @@ jobs:
           python-version: 3.8
           color: red
           os: ubuntu-24.04-arm
+        - color: green
+          python-version: 3.13
+          os: ubuntu-24.04
         - upload-coverage: false
         # - upload-coverage: true
         #   python-version: 3.11
